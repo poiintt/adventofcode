@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 
-const input = (await readFile("./input1.txt")).toString();
+const input = (await readFile("./puzzle.txt")).toString();
 const backpacks = input.split("\n");
 
 let priorities = 0;
