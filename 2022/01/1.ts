@@ -1,13 +1,12 @@
 import { readFile } from "fs/promises";
 
 function getResult(input: string) {
-  const inventories = input.split("\n\n");
-
-  const x = inventories.map((inventory) =>
-    inventory.split("\n").map((item) => parseInt(item))
+  const sums = input.split("\n\n").map((inventories) =>
+    inventories
+      .split("\n")
+      .map((calories) => parseInt(calories))
+      .reduce((total, calories) => total + calories, 0)
   );
-
-  const sums = x.map((inv) => inv.reduce((acc, curr) => acc + curr, 0));
 
   const max = Math.max(...sums);
   return max;

@@ -1,17 +1,17 @@
 import { readFile } from "fs/promises";
 
 function getResult(input: string) {
-  const inventories = input.split("\n\n");
-
-  const x = inventories.map((inventory) =>
-    inventory.split("\n").map((item) => parseInt(item))
-  );
-
-  const sums = x.map((inv) => inv.reduce((acc, curr) => acc + curr, 0));
-
-  const sorted = sums.sort((a, b) => b - a);
-  const topThree = sorted.slice(0, 3);
-  return topThree.reduce((acc, curr) => acc + curr, 0);
+  return input
+    .split("\n\n")
+    .map((inventories) =>
+      inventories
+        .split("\n")
+        .map((calories) => parseInt(calories))
+        .reduce((total, calories) => total + calories, 0)
+    )
+    .sort((a, b) => b - a)
+    .slice(0, 3)
+    .reduce((total, calories) => total + calories, 0);
 }
 
 const example = await readFile("./example.txt", { encoding: "utf8" });
