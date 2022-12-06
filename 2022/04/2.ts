@@ -1,36 +1,29 @@
 import { readFile } from "fs/promises";
 
-function getResult(input: string) {
-  const elfPairs = input.split("\n");
-
-  const elfs = elfPairs.map((elf) => elf.split(","));
-
-  const sections = elfs.map((elf) =>
-    elf.map((sections) =>
-      sections.split("-").map((section) => parseInt(section))
-    )
-  );
-
-  function getRange(elf: number[]) {
-    const result: number[] = [];
-    for (let i = elf[0]; i <= elf[1]; i++) {
-      result.push(i);
-    }
-    return result;
-  }
-
-  const ranges = sections.map((elfs) => elfs.map((elf) => getRange(elf)));
-
-  let result = 0;
-  for (const elf of ranges) {
-    const firstElf = elf[0];
-    const secondElf = elf[1];
-    const overlaps = firstElf.some((ranges) => secondElf.includes(ranges));
-    if (overlaps) {
-      result++;
-    }
+function getRange(elf: number[]) {
+  const result: number[] = [];
+  for (let i = elf[0]; i <= elf[1]; i++) {
+    result.push(i);
   }
   return result;
+}
+
+function getResult(input: string) {
+  return input
+    .split("\n")
+    .map((elfs) =>
+      elfs.split(",").map((timeSpan) => {
+        const range = timeSpan.split("-").map((number) => parseInt(number));
+        return getRange(range);
+      })
+    )
+    .reduce((pairs, elf) => {
+      const overlaps = elf[0].some((ranges) => elf[1].includes(ranges));
+      if (overlaps) {
+        pairs++;
+      }
+      return pairs;
+    }, 0);
 }
 
 const example = await readFile("./example.txt", { encoding: "utf8" });
