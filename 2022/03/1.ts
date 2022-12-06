@@ -1,31 +1,42 @@
 import { readFile } from "fs/promises";
 
-const allRucksacks = await readFile("./puzzle.txt");
+function getResult(input: string) {
+  const rucksacks = input.split("\n");
 
-const rucksacks = allRucksacks.toString().split("\n");
+  let priorities = 0;
+  for (const rucksack of rucksacks) {
+    const half = rucksack.length / 2;
+    const firstCompartment = rucksack.slice(0, half);
+    const secondCompartment = rucksack.slice(half, rucksack.length);
 
-let priorities = 0;
-for (const rucksack of rucksacks) {
-  const half = rucksack.length / 2;
-  const firstCompartment = rucksack.slice(0, half);
-  const secondCompartment = rucksack.slice(half, rucksack.length);
+    const lettersInBoth = firstCompartment
+      .split("")
+      .filter((l) => secondCompartment.includes(l));
+    const set = [...new Set(lettersInBoth)];
 
-  const lettersInBoth = firstCompartment
-    .split("")
-    .filter((l) => secondCompartment.includes(l));
-  const set = [...new Set(lettersInBoth)];
-
-  for (const letter of set) {
-    if (letter.toLowerCase() === letter) {
-      const prio = letter.charCodeAt(0) - 96;
-      console.log({ letter, prio });
-      priorities += prio;
-    } else {
-      const prio = letter.charCodeAt(0) - 38;
-      console.log({ letter, prio });
-      priorities += prio;
+    for (const letter of set) {
+      if (letter.toLowerCase() === letter) {
+        const prio = letter.charCodeAt(0) - 96;
+        priorities += prio;
+      } else {
+        const prio = letter.charCodeAt(0) - 38;
+        priorities += prio;
+      }
     }
   }
+  return priorities;
 }
 
-console.log(priorities);
+const example = await readFile("./example.txt", { encoding: "utf8" });
+const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
+
+console.time("example");
+const exampleResult = getResult(example);
+console.timeEnd("example");
+
+console.time("puzzle");
+const puzzleResult = getResult(puzzle);
+console.timeEnd("puzzle");
+
+console.log({ exampleResult, puzzleResult });
+// { exampleResult: 157, puzzleResult: 7831 }
