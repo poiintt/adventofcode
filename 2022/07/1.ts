@@ -1,31 +1,20 @@
 import { readFile } from "fs/promises";
 
 function getResult(input: string) {
-  let result: Record<string, number> = {};
+  let directoryMap: Record<string, number> = {};
   const currentPath: string[] = [];
-
-  const initJoinedPath = (dir: string) => {
-    const joinedPath = [...currentPath, dir].join("->");
-    if (result[joinedPath] == null) {
-      result[joinedPath] = 0;
-    }
-  };
 
   const lines = input.split("\n");
   for (const line of lines) {
     if (line.startsWith("$ cd")) {
-      const path = line.slice(5);
+      const directoryName = line.slice(5);
 
-      if (path === "..") {
+      if (directoryName === "..") {
         currentPath.pop();
       } else {
-        initJoinedPath(path);
-        currentPath.push(path);
+        currentPath.push(directoryName);
       }
-    } else if (line.startsWith("dir ")) {
-      const [_, dirName] = line.split(" ");
-      initJoinedPath(dirName);
-    } else if (!line.startsWith("$ ls")) {
+    } else if (!line.startsWith("dir ") && !line.startsWith("$ ls")) {
       const [sizeString] = line.split(" ");
       const size = parseInt(sizeString);
 
@@ -33,20 +22,20 @@ function getResult(input: string) {
         arr.slice(0, i + 1).join("->")
       );
 
-      for (const pathPart of pathPartsList) {
-        result[pathPart] += size;
+      for (const path of pathPartsList) {
+        directoryMap[path] ??= 0;
+        directoryMap[path] += size;
       }
     }
   }
 
-  const under10k = Object.entries(result).filter(
-    ([_, size]) => size <= 100_000
-  );
-
-  const sum = under10k.reduce((total, [_, size]) => total + size, 0);
+  const sum = Object.entries(directoryMap)
+    .filter(([_, size]) => size <= 100_000)
+    .reduce((total, [_, size]) => total + size, 0);
 
   return sum;
 }
+
 const example = await readFile("./example.txt", { encoding: "utf8" });
 const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
 

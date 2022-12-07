@@ -1,53 +1,43 @@
 import { readFile } from "fs/promises";
 
 function getResult(input: string) {
-  let result: Record<string, number> = {};
+  let directoryMap: Record<string, number> = {};
   const currentPath: string[] = [];
-
-  const initJoinedPath = (dir: string) => {
-    const joinedPath = [...currentPath, dir].join("->");
-    if (result[joinedPath] == null) {
-      result[joinedPath] = 0;
-    }
-  };
 
   const lines = input.split("\n");
   for (const line of lines) {
     if (line.startsWith("$ cd")) {
-      const path = line.slice(5);
+      const directoryName = line.slice(5);
 
-      if (path === "..") {
+      if (directoryName === "..") {
         currentPath.pop();
       } else {
-        initJoinedPath(path);
-        currentPath.push(path);
+        currentPath.push(directoryName);
       }
-    } else if (line.startsWith("dir ")) {
-      const [_, dirName] = line.split(" ");
-      initJoinedPath(dirName);
-    } else if (!line.startsWith("$ ls")) {
+    } else if (!line.startsWith("dir ") && !line.startsWith("$ ls")) {
       const [sizeString] = line.split(" ");
       const size = parseInt(sizeString);
 
-      const pathPartsList = [...currentPath].map((_, i, arr) =>
+      const pathPartsList = currentPath.map((_, i, arr) =>
         arr.slice(0, i + 1).join("->")
       );
 
-      for (const pathPart of pathPartsList) {
-        result[pathPart] += size;
+      for (const path of pathPartsList) {
+        directoryMap[path] ??= 0;
+        directoryMap[path] += size;
       }
     }
   }
 
-  const unusedSpace = 70_000_000 - result["/"];
-  const toDelete = 30_000_000 - unusedSpace;
+  const sizeToDelete = 30_000_000 - (70_000_000 - directoryMap["/"]);
 
-  const o = Object.entries(result)
+  const firstDirOverSizeToDelete = Object.entries(directoryMap)
     .sort(([_, a], [__, b]) => a - b)
-    .find(([_, size]) => size >= toDelete);
+    .find(([_, size]) => size >= sizeToDelete);
 
-  return o?.[1];
+  return firstDirOverSizeToDelete?.[1];
 }
+
 const example = await readFile("./example.txt", { encoding: "utf8" });
 const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
 
