@@ -6,158 +6,67 @@ function getResult(input: string) {
     return [parts[0], parseInt(parts[1])] as const;
   });
 
-  type Cord = [number, number];
+  type Cord = { x: number; y: number };
 
-  let hPosition: Cord = [0, 0];
-  let tPosition: Cord = [0, 0];
-  const positionsList: string[] = [];
+  let headPos: Cord = { x: 0, y: 0 };
+  let tailPos: Cord = { x: 0, y: 0 };
+  const tailPositions: string[] = [];
 
-  const isSamePosition = (h: Cord, t: Cord) => h[0] === t[0] && h[1] === t[1];
-  const sameRowOrColumn = (h: Cord, t: Cord) => h[0] === t[0] || h[1] === t[1];
+  const isTwoStepsAway = () =>
+    (tailPos.x + 2 === headPos.x && tailPos.y === headPos.y) ||
+    (tailPos.x - 2 === headPos.x && tailPos.y === headPos.y) ||
+    (tailPos.x === headPos.x && tailPos.y + 2 === headPos.y) ||
+    (tailPos.x === headPos.x && tailPos.y - 2 === headPos.y);
 
-  const isTwoStepsAway = (h: Cord, t: Cord) =>
-    (t[0] + 2 === h[0] && t[1] === h[1]) ||
-    (t[0] - 2 === h[0] && t[1] === h[1]) ||
-    (t[0] === h[0] && t[1] + 2 === h[1]) ||
-    (t[0] === h[0] && t[1] - 2 === h[1]);
+  const notTouchingAndNotInSameRowOrColumn = () => {
+    const topLeft = tailPos.x - 1 !== headPos.x || tailPos.y + 1 !== headPos.y;
+    const topRight = tailPos.x + 1 !== headPos.x || tailPos.y + 1 !== headPos.y;
+    const bottomLeft =
+      tailPos.x - 1 !== headPos.x || tailPos.y - 1 !== headPos.y;
+    const bottomRight =
+      tailPos.x + 1 !== headPos.x || tailPos.y - 1 !== headPos.y;
 
-  const notTouchingAndNotInSameRowOrColumn = (h: Cord, t: Cord) => {
-    const topLeft = t[0] - 1 !== h[0] || t[1] + 1 !== h[1];
-    const topRight = t[0] + 1 !== h[0] || t[1] + 1 !== h[1];
-    const bottomLeft = t[0] - 1 !== h[0] || t[1] - 1 !== h[1];
-    const bottomRight = t[0] + 1 !== h[0] || t[1] - 1 !== h[1];
-    const left = t[0] - 1 !== h[0] || t[1] !== h[1];
-    const right = t[0] + 1 !== h[0] || t[1] !== h[1];
-    const top = t[0] !== h[0] || t[1] + 1 !== h[1];
-    const bottom = t[0] !== h[0] || t[1] - 1 !== h[1];
+    const left = tailPos.x - 1 !== headPos.x || tailPos.y !== headPos.y;
+    const right = tailPos.x + 1 !== headPos.x || tailPos.y !== headPos.y;
+    const top = tailPos.x !== headPos.x || tailPos.y + 1 !== headPos.y;
+    const bottom = tailPos.x !== headPos.x || tailPos.y - 1 !== headPos.y;
 
-    return (
-      topLeft &&
-      topRight &&
-      bottomLeft &&
-      bottomRight &&
-      right &&
-      left &&
-      top &&
-      bottom &&
-      t[0] !== h[0] &&
-      t[1] !== h[1]
-    );
+    const touchingDiagonally = topLeft && topRight && bottomLeft && bottomRight;
+    const touchingStraight = right && left && top && bottom;
+
+    const differentRowAndColumn =
+      tailPos.x !== headPos.x && tailPos.y !== headPos.y;
+
+    return touchingDiagonally && touchingStraight && differentRowAndColumn;
   };
 
-  const print = (h: Cord, t: Cord) => {
-    console.log();
-    for (let row = 4; row >= 0; row--) {
-      let line = "";
-      for (let column = 0; column < 6; column++) {
-        if (row === t[1] && column === t[0]) {
-          line += "T";
-        } else if (row === h[1] && column === h[0]) {
-          line += "H";
-        } else {
-          line += ".";
-        }
-      }
-      console.log(line);
+  const setPosition = (axis: keyof Cord, num: number) => {
+    headPos[axis] += num;
+    if (isTwoStepsAway()) {
+      tailPos[axis] += num;
+    } else if (notTouchingAndNotInSameRowOrColumn()) {
+      const otherAxis = axis === "x" ? "y" : "x";
+      tailPos[otherAxis] = headPos[otherAxis];
+      tailPos[axis] += num;
     }
-    console.log();
   };
 
-  const shouldAddTail = (h: Cord, t: Cord) => {
-    const topLeft = t[0] - 1 === h[0] && t[1] + 1 === h[1];
-    const topRight = t[0] + 1 === h[0] && t[1] + 1 === h[1];
-    const bottomLeft = t[0] - 1 === h[0] && t[1] - 1 === h[1];
-    const bottomRight = t[0] + 1 === h[0] && t[1] - 1 === h[1];
-
-    const isSamePosition = h[0] === t[0] && h[1] === t[1];
-
-    return !(
-      topLeft ||
-      topRight ||
-      bottomLeft ||
-      bottomRight ||
-      isSamePosition
-    );
-  };
-
-  positionsList.push(tPosition.join("|"));
-  let lastDirection: string | null = null;
+  tailPositions.push(`${tailPos.x}|${tailPos.y}`);
   for (const [direction, distance] of series) {
-    if (lastDirection == null) {
-      lastDirection = direction;
-    }
-    console.log(`== ${direction} ${distance} ==`);
-
     for (let i = 0; i < distance; i++) {
-      const oldHPosition: Cord = [...hPosition];
       if (direction === "L") {
-        hPosition[0]--;
-        if (!isSamePosition(hPosition, tPosition)) {
-          if (isTwoStepsAway(hPosition, tPosition)) {
-            // tPosition = oldHPosition;
-            tPosition[0]--;
-          } else if (notTouchingAndNotInSameRowOrColumn(hPosition, tPosition)) {
-            // console.log("notTouchingAndNotInSameRowOrColumn");
-            tPosition[1] = hPosition[1];
-            tPosition[0]--;
-          } else {
-            // console.log("else", { hPosition, tPosition });
-          }
-        }
-        // if (shouldAddTail(hPosition, tPosition)) {
-        //   tPosition = oldHPosition;
-        // }
+        setPosition("x", -1);
       } else if (direction === "R") {
-        hPosition[0]++;
-        if (!isSamePosition(hPosition, tPosition)) {
-          if (isTwoStepsAway(hPosition, tPosition)) {
-            tPosition[0]++;
-          } else if (notTouchingAndNotInSameRowOrColumn(hPosition, tPosition)) {
-            // console.log("notTouchingAndNotInSameRowOrColumn");
-            tPosition[1] = hPosition[1];
-            tPosition[0]++;
-          } else {
-            // console.log("else", { hPosition, tPosition });
-          }
-        }
-      } else if (direction === "U") {
-        hPosition[1]++;
-        if (!isSamePosition(hPosition, tPosition)) {
-          if (isTwoStepsAway(hPosition, tPosition)) {
-            // tPosition = oldHPosition;
-            tPosition[1]++;
-          } else if (notTouchingAndNotInSameRowOrColumn(hPosition, tPosition)) {
-            // console.log("notTouchingAndNotInSameRowOrColumn");
-            tPosition[0] = hPosition[0];
-            tPosition[1]++;
-          } else {
-            // console.log("else", { hPosition, tPosition });
-          }
-        }
+        setPosition("x", +1);
       } else if (direction === "D") {
-        hPosition[1]--;
-        if (!isSamePosition(hPosition, tPosition)) {
-          if (isTwoStepsAway(hPosition, tPosition)) {
-            // tPosition = oldHPosition;
-
-            tPosition[1]--;
-          } else if (notTouchingAndNotInSameRowOrColumn(hPosition, tPosition)) {
-            // console.log("notTouchingAndNotInSameRowOrColumn");
-            tPosition[0] = hPosition[0];
-            tPosition[1]--;
-          } else {
-            // console.log("else", { hPosition, tPosition });
-          }
-        }
+        setPosition("y", -1);
+      } else if (direction === "U") {
+        setPosition("y", +1);
       }
-      // console.log({ hPosition, tPosition });
-      positionsList.push(tPosition.join("|"));
-      print(hPosition, tPosition);
+      tailPositions.push(`${tailPos.x}|${tailPos.y}`);
     }
-    lastDirection = direction;
   }
-  const set = [...new Set(positionsList)];
-  console.log(set);
+  const set = [...new Set(tailPositions)];
   const count = set.length;
   return count;
 }
@@ -174,4 +83,4 @@ const puzzleResult = getResult(puzzle);
 console.timeEnd("puzzle");
 
 console.log({ exampleResult, puzzleResult });
-// { exampleResult: 21, puzzleResult: 1843 }
+// { exampleResult: 13, puzzleResult: 6269 }
