@@ -5,13 +5,13 @@ function getResult(input: string) {
 
   const cycles = [1];
   for (const instruction of instructions) {
+    const currentValue = cycles.at(-1)!;
     if (instruction === "noop") {
-      cycles.push(cycles.at(-1)!);
+      cycles.push(currentValue);
     } else if (instruction.startsWith("addx")) {
-      const [_, value] = instruction.split(" ");
-      const v = parseInt(value);
-      cycles.push(cycles.at(-1)!);
-      cycles.push(cycles.at(-1)! + v);
+      const [_, valueText] = instruction.split(" ");
+      const value = parseInt(valueText);
+      cycles.push(...[currentValue, currentValue + value]);
     }
   }
 
@@ -22,11 +22,13 @@ function getResult(input: string) {
       screen[screenRow] = [];
     }
 
-    if (
-      cycleIndex - 1 - 40 * screenRow === cycles[cycleIndex] ||
-      cycleIndex - 40 * screenRow === cycles[cycleIndex] ||
-      cycleIndex + 1 - 40 * screenRow === cycles[cycleIndex]
-    ) {
+    const drawPixel = [-1, 0, +1]
+      .map(
+        (offset) => cycleIndex + offset - 40 * screenRow === cycles[cycleIndex]
+      )
+      .includes(true);
+
+    if (drawPixel) {
       screen[screenRow].push("#");
     } else {
       screen[screenRow].push(".");

@@ -5,22 +5,23 @@ function getResult(input: string) {
 
   const cycles = [1];
   for (const instruction of instructions) {
+    const currentValue = cycles.at(-1)!;
     if (instruction === "noop") {
-      cycles.push(cycles.at(-1)!);
+      cycles.push(currentValue);
     } else if (instruction.startsWith("addx")) {
-      const [_, value] = instruction.split(" ");
-      const v = parseInt(value);
-      cycles.push(cycles.at(-1)!);
-      cycles.push(cycles.at(-1)! + v);
+      const [_, valueText] = instruction.split(" ");
+      const value = parseInt(valueText);
+      cycles.push(...[currentValue, currentValue + value]);
     }
   }
-  let result = 0;
-  for (let i = 20; i < cycles.length; i += 40) {
-    const signalStrength = i * cycles[i - 1];
-    result += signalStrength;
+
+  let signalStrengthSum = 0;
+  for (let cycleNumber = 20; cycleNumber < cycles.length; cycleNumber += 40) {
+    const signalStrength = cycleNumber * cycles.at(-1)!;
+    signalStrengthSum += signalStrength;
   }
 
-  return result;
+  return signalStrengthSum;
 }
 
 const example = await readFile("./example.txt", { encoding: "utf8" });
