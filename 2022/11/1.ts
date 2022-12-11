@@ -1,56 +1,49 @@
 import { readFile } from "fs/promises";
 
 function getResult(input: string) {
-  const monkeys = input.split("\n\n");
-  const parsedMonkeys = monkeys.map((monkey, i) => {
+  const monkeyTexts = input.split("\n\n");
+  const monkeys = monkeyTexts.map((monkey, i) => {
     const line = monkey.split("\n");
-    const [_, startingItemsText] = line[1].split("  Starting items: ");
-    const startingItems = startingItemsText
-      .split(",")
-      .map((val) => parseInt(val));
+    const itemsText = line[1].split("  Starting items: ")[1];
+    const items = itemsText.split(",").map((val) => parseInt(val));
 
-    const [__, operationLine] = line[2].split("  Operation: new = old ");
+    const operationLine = line[2].split("  Operation: new = old ")[1];
     const [operation, operationValueText] = operationLine.split(" ");
     const operationValue = parseInt(operationValueText);
 
-    const [___, testLine] = line[3].split("  Test: ");
-    const [testOperation, testValueText] = testLine.split(" by ");
+    const testLine = line[3].split("  Test: ")[1];
+    const testValueText = testLine.split(" by ")[1];
     const testValue = parseInt(testValueText);
 
-    const [____, truthyMonkeyNumberText] = line[4].split(
+    const truthyMonkeyNumberText = line[4].split(
       "    If true: throw to monkey "
-    );
+    )[1];
     const truthyMonkeyNumber = parseInt(truthyMonkeyNumberText);
 
-    const [_____, falsyMonkeyNumberText] = line[5].split(
+    const falsyMonkeyNumberText = line[5].split(
       "    If false: throw to monkey "
-    );
+    )[1];
     const falsyMonkeyNumber = parseInt(falsyMonkeyNumberText);
 
     return {
       nr: i,
-      startingItems,
-      currentItems: [...startingItems],
+      items,
       operation,
       operationValue,
-      testOperation,
       testValue,
       truthyMonkeyNumber,
       falsyMonkeyNumber,
     };
   });
 
-  const inspectetsPerMonkey: number[] = [];
-  for (let i = 0; i < parsedMonkeys.length; i++) {
-    inspectetsPerMonkey[i] = 0;
-  }
+  const inspectsPerMonkey = monkeys.map(() => 0);
 
   for (let index = 0; index < 20; index++) {
-    for (const monkey of parsedMonkeys) {
-      const yeet = [...monkey.currentItems];
-      for (const item of yeet) {
+    for (const monkey of monkeys) {
+      const currItems = [...monkey.items];
+      for (const item of currItems) {
         let worryLevel = item;
-        inspectetsPerMonkey[monkey.nr]++;
+        inspectsPerMonkey[monkey.nr]++;
 
         let operationValue = monkey.operationValue;
         if (isNaN(monkey.operationValue)) {
@@ -59,31 +52,25 @@ function getResult(input: string) {
 
         if (monkey.operation === "+") {
           worryLevel += operationValue;
-        } else if (monkey.operation === "-") {
-          worryLevel -= operationValue;
         } else if (monkey.operation === "*") {
           worryLevel *= operationValue;
-        } else if (monkey.operation === "/") {
-          worryLevel /= operationValue;
         }
 
         worryLevel = Math.floor(worryLevel / 3);
 
         if (worryLevel % monkey.testValue === 0) {
-          parsedMonkeys[monkey.nr].currentItems.shift();
-          parsedMonkeys[monkey.truthyMonkeyNumber].currentItems.push(
-            worryLevel
-          );
+          monkeys[monkey.nr].items.shift();
+          monkeys[monkey.truthyMonkeyNumber].items.push(worryLevel);
         } else {
-          parsedMonkeys[monkey.nr].currentItems.shift();
-          parsedMonkeys[monkey.falsyMonkeyNumber].currentItems.push(worryLevel);
+          monkeys[monkey.nr].items.shift();
+          monkeys[monkey.falsyMonkeyNumber].items.push(worryLevel);
         }
       }
     }
   }
 
-  const monkeyBusiness = inspectetsPerMonkey
-    .sort((a, b) => b - a)
+  const monkeyBusiness = inspectsPerMonkey
+    .sort((a, z) => z - a)
     .slice(0, 2)
     .reduce((acc, curr) => acc * curr, 1);
   return monkeyBusiness;
