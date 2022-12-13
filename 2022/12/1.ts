@@ -3,148 +3,204 @@ import { readFile } from "fs/promises";
 function getResult(input: string) {
   const grid = input.split("\n").map((line) => line.split(""));
 
-  // 0,0->1,0->2,0->2,1
-  // 0,0->0,1->1,1->
-  const tree = {
-    "0;1": { r: { "1;0": { r: "2;0" } } },
-  };
+  type Cords = { x: number; y: number };
 
-  let startingPos = { x: 0, y: 0 };
+  const mov: (Cords | null)[][] = [];
+  let startingPos: Cords = { x: 0, y: 0 };
+  let endingPos: Cords = { x: 0, y: 0 };
   for (let i = 0; i < grid.length; i++) {
+    mov[i] = [];
     for (let j = 0; j < grid[i].length; j++) {
       if (grid[i][j] === "S") {
         startingPos = { x: j, y: i };
+      } else if (grid[i][j] === "E") {
+        endingPos = { x: j, y: i };
       }
+      mov[i][j] = null;
     }
   }
-
-  // const movment: string[][] = [];
-  // for (let i = 0; i < grid.length; i++) {
-  //   movment[i] = [];
-  //   for (let h = 0; h < grid[i].length; h++) {
-  //     movment[i][h] = ".";
-  //   }
-  // }
 
   // let currentPos = startingPos;
 
-  // let steps = 0;
-  // const path: { x: number; y: number }[] = [];
-  // path.push({ ...startingPos });
-  // let searching = true;
-  const lens: number[] = [];
-  rescurse([startingPos]);
-  function rescurse(currPath: { x: number; y: number }[]) {
-    console.log(Math.min(...lens), currPath.length);
-    // if (currPath.length > 1000) {
-    //   return;
-    // }
-    const currentPos = { ...currPath.at(-1)! };
-    const currentElevation = grid[currentPos.y][currentPos.x];
-    // console.log(`STEP --------------------- ${steps}`);
-    // console.log(currentElevation);
-
-    const getDiff = (cElevation: string, cord: { x: number; y: number }) => {
-      const visited = [...currPath].some(
-        (c) => c.x === cord.x && c.y === cord.y
-      );
-      const nextElevation = grid[cord.y]?.[cord.x];
-
-      if (visited || nextElevation == null || nextElevation === "S") {
-        return null;
+  function print(currPath: Cords[]) {
+    for (let i = 0; i < grid.length; i++) {
+      const line: string[] = [];
+      for (let j = 0; j < grid[i].length; j++) {
+        if (currPath.some((cord) => cord.x === j && cord.y === i)) {
+          line.push("#");
+        } else {
+          line.push(".");
+        }
       }
-      if (nextElevation === "E" && cElevation === "z") {
-        console.log("REACHED E in");
-        // searching = false;
-        return 100;
-      }
-      if (cElevation === "S") return 1;
-      const ö = nextElevation.charCodeAt(0) - cElevation.charCodeAt(0);
-      if (ö > 1 || 0 > ö) return null;
-      return ö;
-    };
-    const diffs = [
-      { x: currentPos.x - 1, y: currentPos.y },
-      { x: currentPos.x + 1, y: currentPos.y },
-      { x: currentPos.x, y: currentPos.y - 1 },
-      { x: currentPos.x, y: currentPos.y + 1 },
-    ].map((cord) => getDiff(currentElevation, cord));
-    if (diffs.includes(100)) {
-      lens.push(currPath.length);
-      return "";
-    }
-    // let indexOfHighestDiff: number | null = null;
-    // let heighestValue: number | null = null;
-    // for (let i = 0; i < diffs.length; i++) {
-    //   const nextSquare = diffs[i];
-    //   if (nextSquare != null) {
-    //     if (heighestValue == null) {
-    //       indexOfHighestDiff = i;
-    //       heighestValue = nextSquare;
-    //     } else if (nextSquare > heighestValue) {
-    //       indexOfHighestDiff = i;
-    //     }
-    //   }
-    // }
-    // console.log({ diffs, indexOfHighestDiff });
-    if (diffs.every((d) => d == null)) {
-      console.log("end");
-      return null;
-      // searching = false;
-    }
-    if (diffs[0] === 1) {
-      // currentPos.x--;
-      // console.log("<");
-      // movment[currentPos.y][currentPos.x] = "<";
-      // steps++;
-      rescurse([...currPath, { x: currentPos.x - 1, y: currentPos.y }]);
-      // currPath.push({ ...currentPos });
-    }
-    if (diffs[1] === 1) {
-      // currentPos.x++;
-      // console.log(">");
-      // movment[currentPos.y][currentPos.x] = ">";
-      // steps++
-      rescurse([...currPath, { x: currentPos.x + 1, y: currentPos.y }]);
-      // currPath.push({ ...currentPos });
-    }
-    if (diffs[2] === 1) {
-      // currentPos.y--;
-      // console.log("^");
-      // movment[currentPos.y][currentPos.x] = "^";
-      // steps++;
-      rescurse([...currPath, { x: currentPos.x, y: currentPos.y - 1 }]);
-      // currPath.push({ ...currentPos });
-    }
-    if (diffs[3] === 1) {
-      // currentPos.y++;
-      // console.log("v");
-      // movment[currentPos.y][currentPos.x] = "v";
-      // steps++;
-      rescurse([...currPath, { x: currentPos.x, y: currentPos.y + 1 }]);
-      // currPath.push({ ...currentPos });
-    }
-    if (diffs[0] === 0) {
-      rescurse([...currPath, { x: currentPos.x - 1, y: currentPos.y }]);
-    }
-    if (diffs[1] === 0) {
-      rescurse([...currPath, { x: currentPos.x + 1, y: currentPos.y }]);
-    }
-    if (diffs[2] === 0) {
-      rescurse([...currPath, { x: currentPos.x, y: currentPos.y - 1 }]);
-    }
-    if (diffs[3] === 0) {
-      rescurse([...currPath, { x: currentPos.x, y: currentPos.y + 1 }]);
+      console.log(line.join(""));
     }
   }
 
-  // while (searching) {}
+  // let minSteps = Infinity;
+  let calls = 0;
+  const queue: Cords[] = [];
+  queue.push({ ...startingPos });
 
-  // console.log(movment.map((x) => x.join("")).join("\n"));
+  const isValidNeighbor = (currPosI: Cords, nextPosDiff: Cords) => {
+    const currElevation = grid[currPosI.y][currPosI.x];
+    const nextElevation =
+      grid[currPosI.y + nextPosDiff.y]?.[currPosI.x + nextPosDiff.x];
 
-  const min = Math.min(...lens);
+    if (nextElevation == null || nextElevation === "S") {
+      return null;
+    }
+    if (currElevation !== "z" && nextElevation === "E") return null;
+    if (currElevation === "z" && nextElevation === "E") {
+      return 1;
+    }
+    if (currElevation === "S") return 1;
+    const diff = nextElevation.charCodeAt(0) - currElevation.charCodeAt(0);
+    if (diff > 1) return null;
+    if (nextElevation === ".") return null;
+    console.log(`${currElevation}->${nextElevation}`);
+    return diff;
+  };
 
-  return min;
+  // let currentPos = { ...startingPos };
+  while (queue.length) {
+    const currentPosition = queue.shift()!;
+    // console.log(currentPosition);
+    // console.log(calls);
+
+    if (
+      currentPosition.x === endingPos.x &&
+      currentPosition.y === endingPos.y
+    ) {
+      console.log("end");
+      break;
+    }
+
+    const neighbors = [
+      { x: -1, y: 0 },
+      { x: +1, y: 0 },
+      { x: 0, y: -1 },
+      { x: 0, y: +1 },
+    ]
+      .filter((cord) => isValidNeighbor(currentPosition, cord) != null)
+      .map((c) => ({
+        x: currentPosition.x + c.x,
+        y: currentPosition.y + c.y,
+      }));
+    // console.log(neighbors);
+
+    for (const neig of neighbors) {
+      if (grid[neig.y][neig.x] !== ".") {
+        queue.push(neig);
+        mov[neig.y][neig.x] = currentPosition;
+      }
+    }
+    grid[currentPosition.y][currentPosition.x] = ".";
+
+    // if (diffs.includes(100)) {
+    // if (currPath.length < minSteps) {
+    //   minSteps = currPath.length;
+    // }
+    // console.log();
+    // console.log(minSteps);
+    // print(currPath);
+    // return minSteps;
+    // }
+    // const [leftDiff, rightDiff, topDiff, bottomDiff] = diffs;
+
+    // if (diffs.every((d) => d == null)) {
+    // console.log("no end");
+    // print(currPath);
+    // blockedCords.push(currentPos);
+    // return;
+    // }
+
+    // type Direction = -1 | 0 | 1;
+
+    // const recurseArgs: {
+    //   diff: number;
+    //   direction: { x: Direction; y: Direction };
+    // }[] = [];
+
+    // if (rightDiff != null) {
+    //   recurseArgs.push({
+    //     diff: rightDiff,
+    //     direction: { x: 1, y: 0 },
+    //   });
+    // }
+    // if (bottomDiff != null) {
+    //   recurseArgs.push({
+    //     diff: bottomDiff,
+    //     direction: { x: 0, y: 1 },
+    //   });
+    // }
+    // if (leftDiff != null) {
+    //   recurseArgs.push({
+    //     diff: leftDiff,
+    //     direction: { x: -1, y: 0 },
+    //   });
+    // }
+    // if (topDiff != null) {
+    //   recurseArgs.push({
+    //     diff: topDiff,
+    //     direction: { x: 0, y: -1 },
+    //   });
+    // }
+
+    // return diffs;
+
+    // rescurse([startingPos]);
+    // function rescurse(currPath: Cords[]) {
+    // if (
+    //   currPath.length > minSteps ||
+    //   // currPath.length < 300 ||
+    //   currPath.length > 500
+    // ) {
+    //   return;
+    // }
+
+    // if (isFinite(minSteps)) {
+    //   console.log({ minSteps });
+    // }
+    calls++;
+    // console.log(calls, minSteps, currPath.length);
+
+    // const currentElevation = grid[currentPos.y][currentPos.x];
+
+    // const blocked = blockedCords.some(
+    //   (c) => c.x === currentPos.x && c.y === currentPos.y
+    // );
+    // if (blocked) {
+    //   return;
+    // }
+
+    // for (const args of recurseArgs) {
+    // const path = [
+    //   ...currPath,
+    //   {
+    //     x: currentPos.x + args.direction.x,
+    //     y: currentPos.y + args.direction.y,
+    //   },
+    // ];
+    // rescurse(path);
+    // }
+  }
+
+  const printPath = () => {
+    let paths = [endingPos];
+
+    let path = paths[0];
+    while (true) {
+      let parent = mov[path.y][path.x];
+      if (parent == null) break;
+      paths.push(parent);
+      path = parent;
+    }
+    // console.log(paths);
+    return paths.length;
+  };
+  const minSteps = printPath();
+
+  return minSteps;
 }
 
 const example = await readFile("./example.txt", { encoding: "utf8" });
@@ -155,8 +211,8 @@ const exampleResult = getResult(example);
 console.timeEnd("example");
 
 console.time("puzzle");
-// const puzzleResult = getResult(puzzle);
+const puzzleResult = getResult(puzzle);
 console.timeEnd("puzzle");
 
-console.log({ exampleResult /*, puzzleResult*/ });
+console.log({ exampleResult, puzzleResult });
 // { exampleResult: 31, puzzleResult:  }
