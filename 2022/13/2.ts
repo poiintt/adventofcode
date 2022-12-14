@@ -38,9 +38,8 @@ function getResult(input: string) {
   }
 
   packetPairs.sort((aText, zText) => {
-    // this is still cursed
-    const a = eval(aText);
-    const z = eval(zText);
+    const a = JSON.parse(aText);
+    const z = JSON.parse(zText);
     const result = recurse(z, a);
     if (result === true) return 1;
     else if (result === false) return -1;

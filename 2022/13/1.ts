@@ -41,9 +41,8 @@ function getResult(input: string) {
   }
 
   for (const [pairIndex, [leftText, rightText]] of packetPairs.entries()) {
-    // this is cursed
-    const left = eval(leftText);
-    const right = eval(rightText);
+    const left = JSON.parse(leftText);
+    const right = JSON.parse(rightText);
 
     const result = recurse(left, right);
     if (result === true) {
