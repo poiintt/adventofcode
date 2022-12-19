@@ -14,16 +14,15 @@ function getResult(input: string) {
       if (xMin == Infinity || x < xMin) xMin = x;
       if (x > xMax) xMax = x;
       if (y < yMin) yMin = y;
-      // +1 is correct for the example, +2 is correct for the puzzle ???
-      if (y > yMax) yMax = y + 2;
+      if (y > yMax) yMax = y;
 
       return { x, y } as Point;
     })
   );
-  const offset = (yMax - yMin);
+  yMax += 1;
+  const offset = yMax - yMin;
   xMin -= offset;
   xMax += offset;
-  console.log({ offset, x: yMax - yMin });
 
   const rockPoints: Point[] = [];
 
@@ -134,7 +133,6 @@ function getResult(input: string) {
       }
 
       if (sandPoint.x === sandPos.x && sandPoint.y === sandPos.y) {
-        console.log("finished");
         fullBreak = true;
         restingSandCount++;
         break;
@@ -149,7 +147,7 @@ function getResult(input: string) {
       break;
     }
   }
-  print();
+  // print();
   return restingSandCount;
 }
 
@@ -165,5 +163,4 @@ const puzzleResult = getResult(puzzle);
 console.timeEnd("puzzle");
 
 console.log({ exampleResult, puzzleResult });
-// exampleResult should be 93
-// { exampleResult: 111, puzzleResult: 27426 }
+// { exampleResult: 93, puzzleResult: 27426 }
