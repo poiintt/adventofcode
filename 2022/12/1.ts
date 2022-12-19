@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { file } from "bun";
 
 function getResult(input: string) {
   const grid = input.split("\n").map((line) => line.split(""));
@@ -203,8 +203,8 @@ function getResult(input: string) {
   return minSteps;
 }
 
-const example = await readFile("./example.txt", { encoding: "utf8" });
-const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
+const example = await file("./example.txt").text();
+const puzzle = await file("./puzzle.txt").text();
 
 console.time("example");
 const exampleResult = getResult(example);
@@ -215,4 +215,4 @@ const puzzleResult = getResult(puzzle);
 console.timeEnd("puzzle");
 
 console.log({ exampleResult, puzzleResult });
-// { exampleResult: 31, puzzleResult:  }
+// { exampleResult: 31, puzzleResult: 447 }

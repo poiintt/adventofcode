@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { file } from "bun";
 
 function getResult(input: string) {
   const strategies = input.toString().split("\n");
@@ -19,7 +19,9 @@ function getResult(input: string) {
     const opponent = Object.entries(hands).find(
       (e) => e[1][0] === opponentEncoded
     )?.[0];
-    const me = Object.entries(hands).find((e) => e[1][1] === meEncoded)?.[0];
+    const me = Object.entries(hands).find(
+      (e) => e[1][1] === meEncoded
+    )?.[0] as Hands;
 
     if (opponent && me) {
       if (opponent === me) {
@@ -33,8 +35,8 @@ function getResult(input: string) {
   }, 0);
 }
 
-const example = await readFile("./example.txt", { encoding: "utf8" });
-const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
+const example = await file("./example.txt").text();
+const puzzle = await file("./puzzle.txt").text();
 
 console.time("example");
 const exampleResult = getResult(example);
@@ -45,3 +47,4 @@ const puzzleResult = getResult(puzzle);
 console.timeEnd("puzzle");
 
 console.log({ exampleResult, puzzleResult });
+// { exampleResult: 15, puzzleResult: 9651 }

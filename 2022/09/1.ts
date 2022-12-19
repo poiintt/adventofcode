@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { file } from "bun";
 
 function getResult(input: string) {
   const series = input.split("\n").map((row) => {
@@ -71,8 +71,8 @@ function getResult(input: string) {
   return count;
 }
 
-const example = await readFile("./example.txt", { encoding: "utf8" });
-const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
+const example = await file("./example.txt").text();
+const puzzle = await file("./puzzle.txt").text();
 
 console.time("example");
 const exampleResult = getResult(example);

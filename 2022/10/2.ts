@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { file } from "bun";
 
 function getResult(input: string) {
   const instructions = input.split("\n");
@@ -39,11 +39,9 @@ function getResult(input: string) {
   return result;
 }
 
-const example = await readFile("./example.txt", { encoding: "utf8" });
-const largerExample = await readFile("./largerExample.txt", {
-  encoding: "utf8",
-});
-const puzzle = await readFile("./puzzle.txt", { encoding: "utf8" });
+const example = await file("./example.txt").text();
+const largerExample = await file("./largerExample.txt").text();
+const puzzle = await file("./puzzle.txt").text();
 
 console.time("example");
 const exampleResult = getResult(example);
