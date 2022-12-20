@@ -99,9 +99,8 @@ function getResult(input: string) {
   }
 
   let restingSandCount = 0;
-  while (true) {
+  outer: while (true) {
     let sandPoint = { x: sandPos.x, y: sandPos.y };
-    let fullBreak = false;
 
     while (true) {
       const x = sandPoint.x;
@@ -133,17 +132,12 @@ function getResult(input: string) {
       }
 
       if (sandPoint.x === sandPos.x && sandPoint.y === sandPos.y) {
-        fullBreak = true;
         restingSandCount++;
-        break;
+        break outer;
       }
 
       grid[y][xMinusOffset] = "o";
       restingSandCount++;
-      break;
-    }
-
-    if (fullBreak) {
       break;
     }
   }
