@@ -1,28 +1,26 @@
 import { file } from "bun";
 
 function getResult(input: string) {
-  const sums = input
+  const sum = input
     .split("\n")
-    .map((a) => {
-      let first = "";
-      let last = "";
-      for (const letter of a.split("")) {
-        console.log(letter);
-        if (!isNaN(Number(letter))) {
-          if (first === "") {
-            first = letter;
-            last = letter;
+    .map((line) => {
+      let firstDigit: number | null = null;
+      let lastDigit: number | null = null;
+      for (const letter of line.split("")) {
+        const num = Number(letter);
+        if (!isNaN(num)) {
+          if (firstDigit === null) {
+            firstDigit = num;
+            lastDigit = num;
           } else {
-            last = letter;
+            lastDigit = num;
           }
         }
       }
-      console.log(a, `${first}${last}`);
-      return Number(`${first}${last}`);
+      return firstDigit! * 10 + lastDigit!;
     })
     .reduce((acc, curr) => acc + curr, 0);
-  console.log(sums);
-  return sums;
+  return sum;
 }
 
 const example = await file("./example.txt").text();

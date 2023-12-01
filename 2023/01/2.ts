@@ -13,47 +13,50 @@ function getResult(input: string) {
     "nine",
   ];
 
-  const sums = input
+  const sum = input
     .split("\n")
-    .map((a) => {
-      let first = "";
-      let last = "";
-      const letters = a.split("");
+    .map((line) => {
+      let firstDigit: number | null = null;
+      let lastDigit: number | null = null;
+      const letters = line.split("");
       for (let i = 0; i < letters.length; i++) {
         const letter = letters[i];
-        console.log(letter);
-        if (!isNaN(Number(letter))) {
-          if (first === "") {
-            first = letter;
-            last = letter;
+        const num = Number(letter);
+        if (!isNaN(num)) {
+          if (firstDigit === null) {
+            firstDigit = num;
+            lastDigit = num;
           } else {
-            last = letter;
+            lastDigit = num;
           }
         } else {
           for (let j = 0; j < numberWords.length; j++) {
             const numberWord = numberWords[j];
-            for (let k = 0; k < numberWord.split("").length; k++) {
-              const numberWordLetter = numberWord.split("")[k];
-              if (letters[i + k] == null || numberWordLetter !== letters[i + k])
+
+            const numberWordLetters = numberWord.split("");
+
+            for (let k = 0; k < numberWordLetters.length; k++) {
+              const numberWordLetter = numberWordLetters[k];
+              const currentLetter = letters[i + k];
+              if (currentLetter == null || numberWordLetter !== currentLetter) {
                 break;
-              else if (numberWord.split("").length - 1 === k) {
-                if (first === "") {
-                  first = String([j + 1]);
-                  last = String([j + 1]);
+              } else if (numberWordLetters.length - 1 === k) {
+                const digit = j + 1;
+                if (firstDigit === null) {
+                  firstDigit = digit;
+                  lastDigit = digit;
                 } else {
-                  last = String([j + 1]);
+                  lastDigit = digit;
                 }
               }
             }
           }
         }
       }
-      console.log(a, `${first}${last}`);
-      return Number(`${first}${last}`);
+      return firstDigit! * 10 + lastDigit!;
     })
     .reduce((acc, curr) => acc + curr, 0);
-  console.log(sums);
-  return sums;
+  return sum;
 }
 
 const example = await file("./example2.txt").text();
