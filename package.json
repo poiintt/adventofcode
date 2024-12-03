@@ -2,6 +2,6 @@
   "name": "adventofcode",
   "type": "module",
   "devDependencies": {
-    "bun-types": "^0.3.0"
+    "bun-types": "^1.1.38"
   }
 }
