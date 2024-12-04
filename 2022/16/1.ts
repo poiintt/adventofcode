@@ -10,11 +10,11 @@ function dijkstra(
   >,
   start: string
 ) {
-  let distances: Record<string, number> = {};
-  let visited = new Set<string>();
-  let nodes = Object.keys(graph);
+  const distances: Record<string, number> = {};
+  const visited = new Set<string>();
+  const nodes = Object.keys(graph);
 
-  for (let node of nodes) {
+  for (const node of nodes) {
     distances[node] = Infinity;
   }
 
@@ -22,7 +22,7 @@ function dijkstra(
 
   while (nodes.length) {
     nodes.sort((a, b) => distances[a] - distances[b]);
-    let closestNode = nodes.shift()!;
+    const closestNode = nodes.shift()!;
 
     // If the shortest distance to the closest node is still Infinity, then remaining nodes are unreachable and we can break
     if (distances[closestNode] === Infinity) break;
@@ -31,7 +31,7 @@ function dijkstra(
 
     for (const neighbor of graph[closestNode].nextValves) {
       if (!visited.has(neighbor)) {
-        let newDistance = distances[closestNode] + 1;
+        const newDistance = distances[closestNode] + 1;
 
         if (newDistance < distances[neighbor]) {
           distances[neighbor] = newDistance;
@@ -43,17 +43,15 @@ function dijkstra(
   return distances;
 }
 
-type OneFlow = {
-  pressure: number;
+type Valve = {
   name: string;
   distance: number;
   flowRate: number;
 };
 
 function getResult(input: string) {
-  type someType = [string, { flowRate: number; nextValves: string[] }][];
-  const valves: someType = input.split("\n").map((line) => {
-    const parts = line
+  const valves = input.split("\n").map((line) => {
+    const [name, rateString, valveNamesString] = line
       .replace("Valve ", "")
       .replace(" has flow rate=", ";")
       .replace(" tunnels lead to valves ", "")
@@ -61,99 +59,87 @@ function getResult(input: string) {
       .split(";");
 
     return [
-      parts[0],
+      name,
       {
-        flowRate: parseInt(parts[1]),
-        nextValves: parts[2].split(", "),
+        flowRate: parseInt(rateString),
+        nextValves: valveNamesString.split(", "),
       },
-    ];
+    ] as const;
   });
 
-  const valvesMap = Object.fromEntries(valves);
+  const valvesObj = Object.fromEntries(valves);
   let workingValveNames = valves
     .filter(([_, data]) => data.flowRate > 0)
     .map(([valve]) => valve);
 
-  let minutesLeft = 30;
-  let currentValve: string | null = "AA";
-  let pressureRelease = 0;
-  const openedValves = new Set<string>();
-  for (let min = 0; min < minutesLeft; min++) {
-    let nextOne: OneFlow | null = null;
-    if (currentValve != null) {
-      const distanceToOtherValves = dijkstra(valvesMap, currentValve);
+  let totalPressure = 0;
+  const openValves = new Set<string>();
+
+  let currentValve: Valve | null = {
+    name: "AA",
+    distance: Infinity,
+    flowRate: -Infinity,
+  };
+  for (let minute = 0; minute < 30; minute++) {
+    if (currentValve?.name != null) {
+      const distanceToOtherValves = dijkstra(valvesObj, currentValve.name);
       const highestDistance = Math.max(
-        ...Object.entries(distanceToOtherValves)
-          .map(([_, distance]) => distance)
-          .filter((distance) => Number.isFinite(distance))
+        ...Object.entries(distanceToOtherValves).map(
+          ([_, distance]) => distance
+        )
       );
-      const calculatedFlow = workingValveNames.map((name) => ({
-        pressure: 0,
-        name,
-        distance: distanceToOtherValves[name],
-        flowRate: valvesMap[name].flowRate,
-      }));
 
-      // TODO: calculate timeLeft * flowRate to get best valve
-      for (let i = 0; i < workingValveNames.length; i++) {
-        for (let time = 1; time < highestDistance + 1; time++) {
-          const curr = calculatedFlow[i];
-          let pressure = curr.pressure;
-          if (time === curr.distance + 1) {
-            continue;
-          }
-          if (time >= curr.distance) {
-            pressure = pressure + curr.flowRate;
-          }
+      const getPressureForValveName = (name: string) => {
+        const distance = distanceToOtherValves[name];
+        const flowRate = valvesObj[name].flowRate;
 
-          calculatedFlow[i] = { ...curr, pressure };
-        }
-      }
-      for (const oneFlow of calculatedFlow) {
-        if (
-          !openedValves.has(oneFlow.name) &&
-          (nextOne == null || oneFlow.pressure > nextOne.pressure)
-        ) {
-          nextOne = oneFlow;
-        }
+        if (highestDistance === distance) return flowRate;
+        return (highestDistance - distance) * flowRate;
+      };
+
+      const possibleNextValves = workingValveNames.toSorted(
+        (a, z) => getPressureForValveName(z) - getPressureForValveName(a)
+      );
+
+      const nextValveName = possibleNextValves.at(0);
+      if (nextValveName != null) {
+        currentValve = {
+          distance: distanceToOtherValves[nextValveName],
+          flowRate: valvesObj[nextValveName].flowRate,
+          name: nextValveName,
+        };
+      } else {
+        currentValve = null;
       }
     }
 
-    if (nextOne == null) {
-      currentValve = null;
-    }
-
-    if (nextOne != null) {
-      currentValve = nextOne.name;
-    }
-
-    const pressureBeingReleased = [...openedValves]
-      .map((name) => valvesMap[name].flowRate)
+    const pressureBeingReleased = [...openValves]
+      .map((name) => valvesObj[name].flowRate)
       .reduce((acc, curr) => acc + curr, 0);
-
-    console.log(`== Minute ${min + 1} ==`);
-    console.log(
-      `Valve ${[
-        ...openedValves,
-      ].toSorted()} is open, releasing ${pressureBeingReleased} pressure.`
-    );
-    if (currentValve != null) console.log(`You move to valve ${currentValve}.`);
-    console.log();
-
-    if (nextOne != null) {
-      openedValves.add(nextOne.name);
+    if (currentValve != null) {
+      openValves.add(currentValve.name);
       workingValveNames = workingValveNames.filter(
-        (name) => !openedValves.has(name)
+        (name) => !openValves.has(name)
       );
-      min += nextOne.distance;
+      minute += currentValve.distance;
     }
-    const x = nextOne != null ? nextOne.distance + 1 : 1;
-    for (let i = 0; i < x; i++) {
-      pressureRelease += pressureBeingReleased;
+
+    // console.log(`== Minute ${minute + 1} ==`);
+    // console.log(
+    //   `Valve ${[
+    //     ...openValves,
+    //   ].toSorted()} is open, releasing ${pressureBeingReleased} pressure.`
+    // );
+    // if (currentValve != null) console.log(`You move to valve ${currentValve.name}.`);
+    // console.log();
+
+    const maxTime = currentValve != null ? currentValve.distance + 1 : 1;
+    for (let i = 0; i < maxTime; i++) {
+      totalPressure += pressureBeingReleased;
     }
   }
 
-  return pressureRelease;
+  return totalPressure;
 }
 
 const example = await file("example.txt").text();
@@ -170,4 +156,3 @@ console.assert(puzzleResult === 1991, "puzzleResult === 1991");
 console.timeEnd("puzzle");
 
 console.log({ exampleResult, puzzleResult });
-// { exampleResult: 1651, puzzleResult: 1991 }
