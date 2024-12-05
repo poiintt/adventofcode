@@ -61,7 +61,6 @@ function getResult(input: string) {
     return diff;
   };
 
-  let count = 0;
   let minSteps = Infinity;
   for (const possibleStart of possibleStarts) {
     const queue: Cords[] = [];

@@ -11,7 +11,7 @@ function getResult(input: string) {
     } else if (instruction.startsWith("addx")) {
       const [_, valueText] = instruction.split(" ");
       const value = parseInt(valueText);
-      cycles.push(...[currentValue, currentValue + value]);
+      cycles.push(currentValue, currentValue + value);
     }
   }
 
