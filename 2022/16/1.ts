@@ -4,7 +4,6 @@ function dijkstra(
   graph: Record<
     string,
     {
-      flowRate: number;
       nextValves: string[];
     }
   >,
@@ -46,7 +45,6 @@ function dijkstra(
 type Valve = {
   name: string;
   distance: number;
-  flowRate: number;
 };
 
 function getResult(input: string) {
@@ -78,10 +76,13 @@ function getResult(input: string) {
   let currentValve: Valve | null = {
     name: "AA",
     distance: Infinity,
-    flowRate: -Infinity,
   };
   for (let minute = 0; minute < 30; minute++) {
-    if (currentValve?.name != null) {
+    const pressureBeingReleased = [...openValves]
+      .map((name) => valvesObj[name].flowRate)
+      .reduce((acc, curr) => acc + curr, 0);
+
+    if (currentValve != null) {
       const distanceToOtherValves = dijkstra(valvesObj, currentValve.name);
       const highestDistance = Math.max(
         ...Object.entries(distanceToOtherValves).map(
@@ -105,23 +106,17 @@ function getResult(input: string) {
       if (nextValveName != null) {
         currentValve = {
           distance: distanceToOtherValves[nextValveName],
-          flowRate: valvesObj[nextValveName].flowRate,
           name: nextValveName,
         };
+
+        openValves.add(currentValve.name);
+        workingValveNames = workingValveNames.filter(
+          (name) => !openValves.has(name)
+        );
+        minute += currentValve.distance;
       } else {
         currentValve = null;
       }
-    }
-
-    const pressureBeingReleased = [...openValves]
-      .map((name) => valvesObj[name].flowRate)
-      .reduce((acc, curr) => acc + curr, 0);
-    if (currentValve != null) {
-      openValves.add(currentValve.name);
-      workingValveNames = workingValveNames.filter(
-        (name) => !openValves.has(name)
-      );
-      minute += currentValve.distance;
     }
 
     // console.log(`== Minute ${minute + 1} ==`);
@@ -130,7 +125,8 @@ function getResult(input: string) {
     //     ...openValves,
     //   ].toSorted()} is open, releasing ${pressureBeingReleased} pressure.`
     // );
-    // if (currentValve != null) console.log(`You move to valve ${currentValve.name}.`);
+    // if (currentValve != null)
+    //   console.log(`You move to valve ${currentValve.name}.`);
     // console.log();
 
     const maxTime = currentValve != null ? currentValve.distance + 1 : 1;
